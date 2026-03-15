@@ -2,26 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Contracts\Services\UserServiceInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\UnauthorizedException;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SignupRequest;
 
 class UserController extends Controller
 {
-    public function register(Request $request)
+    public function __construct(
+        private readonly UserServiceInterface $userService
+    ){}
+
+    public function register(SignupRequest $request)
     {
-        $userData = $request->all();
-        
-        User::create([
-            'email' => $userData['email'],
-            'name' => $userData['name'],
-            'password' => Hash::make($userData['password'])
-        ]);
+        $this->userService->createUser($request->all());
 
         return response()->json([
             'message' => 'User created successfully.'
