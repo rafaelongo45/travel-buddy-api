@@ -2,30 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Contracts\Services\UserServiceInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\UnauthorizedException;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\SignupRequest;
 
-class UserController
+class UserController extends Controller
 {
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(
+        private readonly UserServiceInterface $userService
+    ){}
 
-    public function register(Request $request)
+    public function register(SignupRequest $request)
     {
-        $userData = $request->all();
-        
-        User::create([
-            'email' => $userData['email'],
-            'name' => $userData['name'],
-            'password' => Hash::make($userData['password'])
-        ]);
+        $this->userService->createUser($request->all());
 
         return response()->json([
             'message' => 'User created successfully.'
@@ -34,12 +25,28 @@ class UserController
 
     public function signin(Request $request)
     {
-        if(!Auth::attempt($request->only('email', 'password'))) {
-            throw new UnauthorizedHttpException('User data is not valid.');
+        $credentials = request(['email', 'password']);
+
+        if (! $token = auth()->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
-        
+
+        return $this->respondWithToken($token);
+    }
+
+    /**
+     * Get the token array structure.
+     *
+     * @param  string $token
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function respondWithToken($token)
+    {
         return response()->json([
-            'token' => $request->user()->createToken('signin')->plainTextToken
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth()->factory()->getTTL() * 60
         ], Response::HTTP_OK);
     }
 }
