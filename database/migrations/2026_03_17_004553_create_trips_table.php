@@ -19,8 +19,8 @@ return new class extends Migration
             
             $table->string('destination');
             $table->string('trip_name');
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date');
 
             $table->timestamps();
 

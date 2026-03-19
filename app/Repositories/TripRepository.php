@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Contracts\Repositories\TripRepositoryInterface;
 use App\DTO\Trip\CreateTripDTO;
 use App\Models\Trip;
+use DateTime;
 use Illuminate\Support\Collection;
 
 class TripRepository implements TripRepositoryInterface
@@ -19,5 +20,15 @@ class TripRepository implements TripRepositoryInterface
         return Trip::where([
             'user_id' => $userId
         ])->get();
+    }
+
+    public function getTripsPeriod(int $user_id, string $start_date)
+    {
+        $date = new DateTime($start_date);
+
+        return Trip::where('user_id', '=', $user_id)
+        ->where('end_date', '>=', $date->format('Y-m-d H:i:s'))
+        ->get()
+        ->all();
     }
 }

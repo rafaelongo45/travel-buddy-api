@@ -2,6 +2,7 @@
 
 namespace App\DTO\Trip;
 
+use DateTime;
 use Illuminate\Support\Facades\Hash;
 use Spatie\LaravelData\Data;
 
@@ -20,11 +21,14 @@ class CreateTripDTO extends Data
 
     public static function process(array $data, int $userId): self
     {
+        $start_date = new DateTime($data['start_date']);
+        $end_date = new DateTime($data['end_date']);
+
         return self::from([
             'destination' => $data['destination'],
             'trip_name' => $data['trip_name'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
+            'start_date' => $start_date->format('Y-m-d H:i:s'),
+            'end_date' => $end_date->format('Y-m-d H:i:s'),
             'user_id' => $userId
         ]);
     }
