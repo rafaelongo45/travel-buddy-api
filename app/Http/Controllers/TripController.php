@@ -29,4 +29,12 @@ class TripController extends Controller
 
         return response()->json($trips, Response::HTTP_OK);
     }
+
+    public function getUserTrip(int $id)
+    {
+        return response()->json(
+            $this->tripService->getUserTrip($id),
+            Response::HTTP_OK
+        );
+    }
 }

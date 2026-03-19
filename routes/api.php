@@ -12,6 +12,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::prefix('trips')->group(function () {
         Route::post('/', [TripController::class, 'createTrip']);
+        Route::get('/{id}', [TripController::class, 'getUserTrip']);
         Route::get('/', [TripController::class, 'getUserTrips']);
     });
 });

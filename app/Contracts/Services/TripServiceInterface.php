@@ -13,4 +13,6 @@ interface TripServiceInterface
      * @return Collection<Trip>
      */
     public function getUserTrips(): Collection;
+
+    public function getUserTrip(int $trip_id): Trip;
 }

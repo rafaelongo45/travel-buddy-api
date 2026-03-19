@@ -31,4 +31,11 @@ class TripRepository implements TripRepositoryInterface
         ->get()
         ->all();
     }
+
+    public function getTrip(int $user_id, int $trip_id): ?Trip
+    {
+        return Trip::where('user_id', '=', $user_id)
+        ->where('id', '=', $trip_id)
+        ->first();
+    }
 }
