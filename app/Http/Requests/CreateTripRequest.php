@@ -26,7 +26,7 @@ class CreateTripRequest extends FormRequest
             'destination' => ['required', 'string'],
             'trip_name' => ['required', 'string'],
             'start_date' => ['required', 'date_format:Y-m-d', 'after:yesterday'],
-            'end_date' => ['required', 'date_format:Y-m-d', 'after:today'],
+            'end_date' => ['required', 'date_format:Y-m-d', 'after:start_date'],
         ];
     }
 }

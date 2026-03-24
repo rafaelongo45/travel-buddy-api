@@ -17,14 +17,12 @@ class TripService implements TripServiceInterface
         private readonly TripRepositoryInterface $tripRepository
     ){}
 
-    public function createTrip(array $tripData): void
+    public function createTrip(array $tripData, int $userId): void
     {
-        $user_id = auth()->guard('api')->user()->id;
-
-        $tripDto = CreateTripDTO::process($tripData, $user_id);
+        $tripDto = CreateTripDTO::process($tripData, $userId);
 
         $user_trips = $this->tripRepository->getTripsPeriod(
-            $user_id,
+            $userId,
             $tripDto->start_date
         );
 
@@ -32,27 +30,27 @@ class TripService implements TripServiceInterface
         {
             throw new UserHasTripInPeriod(
                 'User already has an active trip in the sent period.',
-                Response::HTTP_BAD_REQUEST
+                Response::HTTP_CONFLICT
             );
         }
 
         $this->tripRepository->create($tripDto);
     }
 
-    public function getUserTrips(): Collection
+    public function getUserTrips(int $userId): Collection
     {
-        $trips =  $this->tripRepository->getTrips(auth()->guard('api')->user()->id);
+        $trips =  $this->tripRepository->getTrips($userId);
 
         return new Collection($trips);
     }
 
-    public function getUserTrip(int $trip_id): Trip
+    public function getUserTrip(int $tripId, int $userId): Trip
     {
-        $trip = $this->tripRepository->getTrip(auth()->guard('api')->user()->id, $trip_id);
+        $trip = $this->tripRepository->getTrip($userId, $tripId);
 
         if(empty($trip))
         {
-            throw new TripNotFoundException('Trip was not found for the user.', Response::HTTP_BAD_REQUEST);
+            throw new TripNotFoundException('Trip was not found for the user.', Response::HTTP_NOT_FOUND);
         }
 
         return $trip;

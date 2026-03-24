@@ -25,7 +25,7 @@ class UserController extends Controller
 
     public function signin(Request $request)
     {
-        $credentials = request(['email', 'password']);
+        $credentials = $request->all(['email', 'password']);
 
         if (! $token = auth()->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);

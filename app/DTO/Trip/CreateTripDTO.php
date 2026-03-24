@@ -3,7 +3,6 @@
 namespace App\DTO\Trip;
 
 use DateTime;
-use Illuminate\Support\Facades\Hash;
 use Spatie\LaravelData\Data;
 
 class CreateTripDTO extends Data

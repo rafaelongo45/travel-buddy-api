@@ -22,10 +22,10 @@ class TripRepository implements TripRepositoryInterface
         ])->get();
     }
 
-    public function getTripsPeriod(int $user_id, string $start_date)
+    public function getTripsPeriod(int $user_id, string $start_date): ?array
     {
         $date = new DateTime($start_date);
-
+        
         return Trip::where('user_id', '=', $user_id)
         ->where('end_date', '>=', $date->format('Y-m-d H:i:s'))
         ->get()

@@ -16,7 +16,9 @@ class TripController extends Controller
 
     public function createTrip(CreateTripRequest $request)
     {
-        $this->tripService->createTrip($request->all());
+        $userId = auth()->guard('api')->user()->id;
+
+        $this->tripService->createTrip($request->all(), $userId);
 
         return response()->json([
             'message' => 'Trip created successfully.'
@@ -25,15 +27,18 @@ class TripController extends Controller
 
     public function getUserTrips()
     {
-        $trips = $this->tripService->getUserTrips();
+        $userId = auth()->guard('api')->user()->id;
+        $trips = $this->tripService->getUserTrips($userId);
 
         return response()->json($trips, Response::HTTP_OK);
     }
 
     public function getUserTrip(int $id)
     {
+        $userId = auth()->guard('api')->user()->id;
+
         return response()->json(
-            $this->tripService->getUserTrip($id),
+            $this->tripService->getUserTrip($id, $userId),
             Response::HTTP_OK
         );
     }

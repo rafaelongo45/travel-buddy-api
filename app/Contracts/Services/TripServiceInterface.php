@@ -7,12 +7,12 @@ use App\Models\Trip;
 
 interface TripServiceInterface
 {
-    public function createTrip(array $tripData): void;
+    public function createTrip(array $tripData, int $userId): void;
 
     /**
      * @return Collection<Trip>
      */
-    public function getUserTrips(): Collection;
+    public function getUserTrips(int $userId): Collection;
 
-    public function getUserTrip(int $trip_id): Trip;
+    public function getUserTrip(int $tripId, int $userId): Trip;
 }
