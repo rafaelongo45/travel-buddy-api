@@ -67,4 +67,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
+    }
 }

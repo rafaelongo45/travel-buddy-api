@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
 # Instalar extensões PHP necessárias
 RUN docker-php-ext-install pdo pdo_pgsql
 
+# Instalar PCOV para code coverage
+RUN pecl install pcov && docker-php-ext-enable pcov
+
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

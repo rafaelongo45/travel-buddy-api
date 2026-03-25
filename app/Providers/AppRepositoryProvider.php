@@ -2,14 +2,17 @@
 
 namespace App\Providers;
 
+use App\Contracts\Repositories\TripRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
+use App\Repositories\TripRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppRepositoryProvider extends ServiceProvider
 {
     public $bindings = [
-        UserRepositoryInterface::class => UserRepository::class
+        UserRepositoryInterface::class => UserRepository::class,
+        TripRepositoryInterface::class => TripRepository::class
     ];
     /**
      * Register services.
