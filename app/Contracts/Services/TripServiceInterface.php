@@ -15,4 +15,8 @@ interface TripServiceInterface
     public function getUserTrips(int $userId): Collection;
 
     public function getUserTrip(int $tripId, int $userId): Trip;
+
+    public function updateTrip(array $tripData, int $tripId, int $userId): void;
+
+    public function deleteTrip(int $tripId, int $userId): void;
 }

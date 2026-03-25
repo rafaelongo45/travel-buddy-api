@@ -21,8 +21,9 @@ return new class extends Migration
             $table->string('trip_name');
             $table->dateTime('start_date');
             $table->dateTime('end_date');
-
+            
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('user_id')
                 ->references('id')

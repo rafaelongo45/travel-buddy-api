@@ -3,6 +3,7 @@
 namespace tests\Unit\app\Services;
 
 use App\Contracts\Repositories\TripRepositoryInterface;
+use App\Exceptions\InvalidDateTripUpdateException;
 use App\Exceptions\Trip\TripNotFoundException;
 use App\Exceptions\Trip\UserHasTripInPeriod;
 use App\Models\Trip;
@@ -115,4 +116,112 @@ it('should throw TripNotFoundException when trip is not found', function () {
         ->andReturn(null);
 
     $this->tripService->getUserTrip($tripId, $userId);
+})->throws(TripNotFoundException::class);
+
+it('should update a trip successfully', function () {
+    $tripId = 1;
+    $userId = 1;
+    $tripData = ['destination' => 'Argentina'];
+
+    $existingTrip = new Trip();
+    $existingTrip->start_date = '2027-06-01 00:00:00';
+
+    $this->tripRepository
+        ->shouldReceive('getTrip')
+        ->once()
+        ->with($userId, $tripId)
+        ->andReturn($existingTrip);
+
+    $this->tripRepository
+        ->shouldReceive('update')
+        ->once();
+
+    $this->tripService->updateTrip($tripData, $tripId, $userId);
+
+    expect(true)->toBeTrue();
+});
+
+it('should throw TripNotFoundException when trying to update a non-existent trip', function () {
+    $tripId = 99;
+    $userId = 1;
+
+    $this->tripRepository
+        ->shouldReceive('getTrip')
+        ->once()
+        ->with($userId, $tripId)
+        ->andReturn(null);
+
+    $this->tripService->updateTrip(['destination' => 'Argentina'], $tripId, $userId);
+})->throws(TripNotFoundException::class);
+
+it('should throw InvalidDateTripUpdateException when end_date is before trip start_date', function () {
+    $tripId = 1;
+    $userId = 1;
+
+    $existingTrip = new Trip();
+    $existingTrip->start_date = '2027-06-10 00:00:00';
+
+    $this->tripRepository
+        ->shouldReceive('getTrip')
+        ->once()
+        ->with($userId, $tripId)
+        ->andReturn($existingTrip);
+
+    $this->tripService->updateTrip(['end_date' => '2027-06-01'], $tripId, $userId);
+})->throws(InvalidDateTripUpdateException::class);
+
+it('should update a trip without touching dates when they are not provided', function () {
+    $tripId = 1;
+    $userId = 1;
+    $tripData = ['trip_name' => 'New Name'];
+
+    $existingTrip = new Trip();
+    $existingTrip->start_date = '2027-06-01 00:00:00';
+
+    $this->tripRepository
+        ->shouldReceive('getTrip')
+        ->once()
+        ->with($userId, $tripId)
+        ->andReturn($existingTrip);
+
+    $this->tripRepository
+        ->shouldReceive('update')
+        ->once();
+
+    $this->tripService->updateTrip($tripData, $tripId, $userId);
+
+    expect(true)->toBeTrue();
+});
+
+it('should delete a trip successfully', function () {
+    $tripId = 1;
+    $userId = 1;
+
+    $this->tripRepository
+        ->shouldReceive('getTrip')
+        ->once()
+        ->with($userId, $tripId)
+        ->andReturn(new Trip());
+
+    $this->tripRepository
+        ->shouldReceive('delete')
+        ->once()
+        ->with($tripId, $userId);
+
+    $this->tripService->deleteTrip($tripId, $userId);
+
+    expect(true)->toBeTrue();
+});
+
+it('should throw TripNotFoundException when trying to delete a non-existent trip', function () {
+    $tripId = 99;
+    $userId = 1;
+
+    $this->tripRepository
+        ->shouldReceive('getTrip')
+        ->once()
+        ->with($userId, $tripId)
+        ->andReturn(null);
+
+    $this->tripService->deleteTrip($tripId, $userId);
 })->throws(TripNotFoundException::class);

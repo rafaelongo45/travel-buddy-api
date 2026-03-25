@@ -4,6 +4,7 @@ namespace App\Contracts\Repositories;
 
 use App\Models\Trip;
 use App\DTO\Trip\CreateTripDTO;
+use App\DTO\Trip\UpdateTripDTO;
 use Illuminate\Support\Collection;
 
 interface TripRepositoryInterface
@@ -12,7 +13,11 @@ interface TripRepositoryInterface
 
     public function getTrips(int $userId): Collection;
 
-    public function getTripsPeriod(int $user_id, string $start_date): ?array;
+    public function getTripsPeriod(int $userId, string $start_date): ?array;
 
-    public function getTrip(int $user_id, int $trip_id): ?Trip;
+    public function getTrip(int $userId, int $tripId): ?Trip;
+
+    public function update(UpdateTripDTO $tripData, int $tripId, int $userId): void;
+
+    public function delete(int $tripId,  int $userId): void;
 }

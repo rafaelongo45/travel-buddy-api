@@ -3,6 +3,7 @@
 namespace tests\Unit\app\Repositories;
 
 use App\DTO\Trip\CreateTripDTO;
+use App\DTO\Trip\UpdateTripDTO;
 use App\Models\Trip;
 use App\Models\User;
 use App\Repositories\TripRepository;
@@ -80,4 +81,59 @@ it('should return null when trip is not found', function () {
     $data = $this->tripRepository->getTrip($user->id, 999);
 
     expect($data)->toBeNull();
+});
+
+it('should update all provided fields of a trip in the database', function () {
+    $user = User::factory(1)->create()->first();
+    $trip = Trip::factory(1)->create(['user_id' => $user->id])->first();
+
+    $updateDto = UpdateTripDTO::from([
+        'destination' => 'Updated Destination',
+        'trip_name'   => 'Updated Name',
+    ]);
+
+    $this->tripRepository->update($updateDto, $trip->id, $user->id);
+
+    $this->assertDatabaseHas('trips', [
+        'id'          => $trip->id,
+        'destination' => 'Updated Destination',
+        'trip_name'   => 'Updated Name',
+    ]);
+});
+
+it('should update only the destination without changing other fields', function () {
+    $user = User::factory(1)->create()->first();
+    $trip = Trip::factory(1)->create([
+        'user_id'  => $user->id,
+        'trip_name' => 'Original Name',
+    ])->first();
+
+    $updateDto = UpdateTripDTO::from(['destination' => 'New Destination']);
+
+    $this->tripRepository->update($updateDto, $trip->id, $user->id);
+
+    $this->assertDatabaseHas('trips', [
+        'id'          => $trip->id,
+        'destination' => 'New Destination',
+        'trip_name'   => 'Original Name',
+    ]);
+});
+
+it('should delete a trip from the database', function () {
+    $user = User::factory(1)->create()->first();
+    $trip = Trip::factory(1)->create(['user_id' => $user->id])->first();
+
+    $this->tripRepository->delete($trip->id, $user->id);
+
+    $this->assertSoftDeleted('trips', ['id' => $trip->id]);
+});
+
+it('should not delete a trip that belongs to another user', function () {
+    $user      = User::factory(1)->create()->first();
+    $otherUser = User::factory(1)->create()->first();
+    $trip      = Trip::factory(1)->create(['user_id' => $user->id])->first();
+
+    $this->tripRepository->delete($trip->id, $otherUser->id);
+
+    $this->assertDatabaseHas('trips', ['id' => $trip->id]);
 });
