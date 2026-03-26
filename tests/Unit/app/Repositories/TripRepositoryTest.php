@@ -42,11 +42,16 @@ it('should find user trips from database', function () {
 it('should find trips in a period from database', function () {
     $user = User::factory(1)->create()->first();
     Trip::factory(3)->create([
-        'user_id' => $user->id,
-        'end_date' => now()->addMonth(),
+        'user_id'    => $user->id,
+        'start_date' => now()->addDays(5),
+        'end_date'   => now()->addMonth(),
     ]);
 
-    $data = $this->tripRepository->getTripsPeriod($user->id, now()->subDay()->format('Y-m-d'));
+    $data = $this->tripRepository->getTripsPeriod(
+        $user->id,
+        now()->addDays(3)->format('Y-m-d H:i:s'),
+        now()->addDays(10)->format('Y-m-d H:i:s'),
+    );
 
     expect($data)->not->toBeEmpty();
     expect(count($data))->toBe(3);
@@ -55,11 +60,50 @@ it('should find trips in a period from database', function () {
 it('should return empty when no trips exist in the period', function () {
     $user = User::factory(1)->create()->first();
     Trip::factory(3)->create([
-        'user_id' => $user->id,
-        'end_date' => now()->subMonth(),
+        'user_id'    => $user->id,
+        'start_date' => now()->addMonths(2),
+        'end_date'   => now()->addMonths(3),
     ]);
 
-    $data = $this->tripRepository->getTripsPeriod($user->id, now()->addDay()->format('Y-m-d'));
+    $data = $this->tripRepository->getTripsPeriod(
+        $user->id,
+        now()->addDay()->format('Y-m-d H:i:s'),
+        now()->addDays(15)->format('Y-m-d H:i:s'),
+    );
+
+    expect($data)->toBeEmpty();
+});
+
+it('should return empty when new trip ends before existing trip starts', function () {
+    $user = User::factory(1)->create()->first();
+    Trip::factory(1)->create([
+        'user_id'    => $user->id,
+        'start_date' => now()->addMonths(2),
+        'end_date'   => now()->addMonths(3),
+    ]);
+
+    $data = $this->tripRepository->getTripsPeriod(
+        $user->id,
+        now()->addDay()->format('Y-m-d H:i:s'),
+        now()->addDays(15)->format('Y-m-d H:i:s'),
+    );
+
+    expect($data)->toBeEmpty();
+});
+
+it('should return empty when new trip starts after existing trip ends', function () {
+    $user = User::factory(1)->create()->first();
+    Trip::factory(1)->create([
+        'user_id'    => $user->id,
+        'start_date' => now()->addDay(),
+        'end_date'   => now()->addDays(15),
+    ]);
+
+    $data = $this->tripRepository->getTripsPeriod(
+        $user->id,
+        now()->addMonths(2)->format('Y-m-d H:i:s'),
+        now()->addMonths(3)->format('Y-m-d H:i:s'),
+    );
 
     expect($data)->toBeEmpty();
 });

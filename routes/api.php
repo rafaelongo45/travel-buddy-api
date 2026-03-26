@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\TripParticipantsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 
@@ -16,5 +17,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [TripController::class, 'getUserTrips']);
         Route::put('/{trip_id}', [TripController::class, 'updateTrip']);
         Route::delete('/{trip_id}', [TripController::class, 'deleteTrip']);
+
+        Route::post('/{id}/invites', [TripParticipantsController::class, 'invite']);
     });
 });

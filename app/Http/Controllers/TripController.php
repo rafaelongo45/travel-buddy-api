@@ -62,9 +62,4 @@ class TripController extends Controller
 
         return response()->noContent();
     }
-
-    private function getUserId(): int
-    {
-        return auth()->guard('api')->user()->id;
-    }
 }

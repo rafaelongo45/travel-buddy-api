@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Services\UserServiceInterface;
 use App\DTO\Auth\CreateUserDTO;
+use App\Models\User;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class UserService implements UserServiceInterface
@@ -27,5 +28,16 @@ class UserService implements UserServiceInterface
         }
 
         $this->userRepository->create($userDto);
-    } 
+    }
+
+    public function findUser(int $userId): User
+    {
+        $user = $this->userRepository->findUser($userId);
+        
+        if($user === null) {
+            throw new BadRequestHttpException('Invalid Data.');
+        }
+
+        return $user;
+    }
 }
