@@ -13,7 +13,7 @@ interface TripRepositoryInterface
 
     public function getTrips(int $userId): Collection;
 
-    public function getTripsPeriod(int $userId, string $start_date): ?array;
+    public function getTripsPeriod(int $userId, string $start_date): array;
 
     public function getTrip(int $userId, int $tripId): ?Trip;
 

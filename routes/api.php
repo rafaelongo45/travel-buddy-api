@@ -9,7 +9,7 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [UserController::class, 'signin']);
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::prefix('trips')->group(function () {
         Route::post('/', [TripController::class, 'createTrip']);
         Route::get('/{trip_id}', [TripController::class, 'getUserTrip']);

@@ -23,7 +23,11 @@ class TripService implements TripServiceInterface
 
     public function createTrip(array $tripData, int $userId): void
     {
-        $tripDto = CreateTripDTO::process($tripData, $userId);
+        $tripData['start_date'] = (new DateTime($tripData['start_date']))->format('Y-m-d H:i:s');
+        $tripData['end_date'] = (new DateTime($tripData['end_date']))->format('Y-m-d H:i:s');
+        $tripData['user_id'] = $userId;
+        
+        $tripDto = CreateTripDTO::from($tripData);
 
         $userTrips = $this->tripRepository->getTripsPeriod(
             $userId,
@@ -91,7 +95,7 @@ class TripService implements TripServiceInterface
 
     private function validateTripExists(?Trip $trip): void
     {
-        if(empty($trip))
+        if($trip === null)
         {
             throw new TripNotFoundException('Trip was not found for the user.', Response::HTTP_NOT_FOUND);
         }

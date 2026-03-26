@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\UserServiceInterface;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SigninRequest;
 use App\Http\Requests\SignupRequest;
+use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
 {
@@ -14,7 +15,7 @@ class UserController extends Controller
         private readonly UserServiceInterface $userService
     ){}
 
-    public function register(SignupRequest $request)
+    public function register(SignupRequest $request): JsonResponse
     {
         $this->userService->createUser($request->all());
 
@@ -23,25 +24,21 @@ class UserController extends Controller
         ], Response::HTTP_CREATED);
     }
 
-    public function signin(Request $request)
+    public function signin(SigninRequest $request): JsonResponse
     {
         $credentials = $request->all(['email', 'password']);
 
         if (! $token = auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return response()->json([
+                'message' => 'Authentication failed.',
+                'error' => 'Unauthorized'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         return $this->respondWithToken($token);
     }
 
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    private function respondWithToken($token)
+    private function respondWithToken(string $token): JsonResponse
     {
         return response()->json([
             'access_token' => $token,

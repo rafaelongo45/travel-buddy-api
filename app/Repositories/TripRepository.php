@@ -21,7 +21,7 @@ class TripRepository implements TripRepositoryInterface
         return Trip::where('user_id', $userId)->get();
     }
 
-    public function getTripsPeriod(int $userId, string $start_date): ?array
+    public function getTripsPeriod(int $userId, string $start_date): array
     {
         $date = new DateTime($start_date);
         
