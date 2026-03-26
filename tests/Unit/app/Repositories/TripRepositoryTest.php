@@ -15,12 +15,13 @@ beforeEach(function () {
 it('should create a trip in the database', function () {
     $user = User::factory(1)->create()->first();
 
-    $tripDto = CreateTripDTO::process([
+    $tripDto = CreateTripDTO::from([
         'destination' => fake()->country(),
         'trip_name' => fake()->words(3, true),
         'start_date' => now()->addDay()->format('Y-m-d'),
         'end_date' => now()->addMonth()->format('Y-m-d'),
-    ], $user->id);
+        'user_id' => $user->id
+    ]);
 
     $this->tripRepository->create($tripDto);
 
