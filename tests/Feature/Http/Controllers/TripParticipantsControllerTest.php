@@ -126,6 +126,41 @@ it('should return 400 when user tries to invite himself', function () {
     $response->assertStatus(400);
 });
 
+it('should return invites for a trip and return 200', function () {
+    $trip = Trip::factory()->create(['user_id' => $this->user->id]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('getAllTripInvites')
+        ->once()
+        ->with($trip->id, $this->user->id)
+        ->andReturn(collect([]));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->getJson("/api/trips/{$trip->id}/invites");
+
+    $response->assertStatus(200);
+});
+
+it('should return 401 when not authenticated on getInvites', function () {
+    $response = $this->getJson('/api/trips/1/invites');
+
+    $response->assertStatus(401);
+});
+
+it('should return 404 when trip does not belong to user on getInvites', function () {
+    $trip = Trip::factory()->create(['user_id' => $this->user->id]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('getAllTripInvites')
+        ->once()
+        ->andThrow(new TripNotFoundException('Trip was not found for the user.', 404));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->getJson("/api/trips/{$trip->id}/invites");
+
+    $response->assertStatus(404);
+});
+
 it('should return 409 when invite was already sent', function () {
     $guest = User::factory()->create();
     $trip  = Trip::factory()->create(['user_id' => $this->user->id]);

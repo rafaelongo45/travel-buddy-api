@@ -7,7 +7,7 @@ use App\Contracts\Services\TripServiceInterface;
 use App\Exceptions\Trip\TripNotFoundException;
 use App\Exceptions\TripInviteAlreadySent;
 use App\Models\Trip;
-use App\Models\TripParticipants;
+use App\Models\TripParticipant;
 use App\Services\TripParticipantsService;
 use Mockery;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -101,10 +101,48 @@ it('should throw TripInviteAlreadySent when invite was already sent', function (
         ->shouldReceive('findInvite')
         ->once()
         ->with($guestId, $tripId)
-        ->andReturn(new TripParticipants());
+        ->andReturn(new TripParticipant());
 
     $this->tripParticipantsService->inviteUser(
         ['user_id' => $guestId, 'trip_id' => $tripId],
         $userId
     );
 })->throws(TripInviteAlreadySent::class);
+
+it('should return a collection of invites for a trip', function () {
+    $tripId = 1;
+    $userId = 1;
+
+    $this->tripService
+        ->shouldReceive('getUserTrip')
+        ->once()
+        ->with($tripId, $userId)
+        ->andReturn(new Trip());
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getInvites')
+        ->once()
+        ->with($tripId)
+        ->andReturn(collect([]));
+
+    $result = $this->tripParticipantsService->getAllTripInvites($tripId, $userId);
+
+    expect($result)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+});
+
+it('should throw TripNotFoundException when trip does not belong to user on getInvites', function () {
+    $tripId = 99;
+    $userId = 1;
+
+    $this->tripService
+        ->shouldReceive('getUserTrip')
+        ->once()
+        ->with($tripId, $userId)
+        ->andThrow(new TripNotFoundException('Trip was not found for the user.', 404));
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getInvites')
+        ->never();
+
+    $this->tripParticipantsService->getAllTripInvites($tripId, $userId);
+})->throws(TripNotFoundException::class);

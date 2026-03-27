@@ -19,5 +19,7 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/{trip_id}', [TripController::class, 'deleteTrip']);
 
         Route::post('/{id}/invites', [TripParticipantsController::class, 'invite']);
+        Route::get('/{id}/invites', [TripParticipantsController::class, 'getInvites']);
+
     });
 });

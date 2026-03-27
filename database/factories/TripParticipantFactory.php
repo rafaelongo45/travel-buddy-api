@@ -6,7 +6,7 @@ use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class TripParticipantsFactory extends Factory
+class TripParticipantFactory extends Factory
 {
     public function definition(): array
     {

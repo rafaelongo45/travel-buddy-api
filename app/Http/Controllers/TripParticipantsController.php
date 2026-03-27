@@ -23,4 +23,13 @@ class TripParticipantsController extends Controller
             'message' => 'User invited.'
         ], Response::HTTP_CREATED);
     }
+
+    public function getInvites(int $id): JsonResponse
+    {
+        $userId = $this->getUserId();
+
+        $invites = $this->tripParticipantsService->getAllTripInvites($id, $userId);
+
+        return response()->json($invites, Response::HTTP_OK);
+    }
 }

@@ -4,19 +4,27 @@ namespace App\Repositories;
 
 use App\Contracts\Repositories\TripParticipantsRepositoryInterface;
 use App\DTO\TripParticipants\InviteUserDto;
-use App\Models\TripParticipants;
+use App\Models\TripParticipant;
+use Illuminate\Support\Collection;
 
 class TripParticipantsRepository implements TripParticipantsRepositoryInterface
 {
     public function create(InviteUserDto $inviteUserDto): void
     {
-        TripParticipants::create($inviteUserDto->toArray());
+        TripParticipant::create($inviteUserDto->toArray());
     }
 
-    public function findInvite(int $userId, int $tripId): ?TripParticipants
+    public function findInvite(int $userId, int $tripId): ?TripParticipant
     {
-        return TripParticipants::where('user_id', $userId)
+        return TripParticipant::where('user_id', $userId)
             ->where('trip_id', $tripId)
             ->first();
+    }
+
+    public function getInvites(int $tripId): Collection
+    {
+        return TripParticipant::with('user')
+            ->where('trip_id', $tripId)
+            ->get();
     }
 }

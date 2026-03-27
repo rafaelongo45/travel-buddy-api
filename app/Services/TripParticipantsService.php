@@ -5,15 +5,17 @@ namespace App\Services;
 use App\Contracts\Repositories\TripParticipantsRepositoryInterface;
 use App\Contracts\Services\TripParticipantsServiceInterface;
 use App\Contracts\Services\TripServiceInterface;
+use App\DTO\TripParticipants\GetAllTripParticipantsDto;
 use App\DTO\TripParticipants\InviteUserDto;
 use App\Exceptions\TripInviteAlreadySent;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TripParticipantsService implements TripParticipantsServiceInterface
 {
     public function __construct(
-        private readonly TripServiceInterface $tripServiceInterface,
+        private readonly TripServiceInterface $tripService,
         private readonly TripParticipantsRepositoryInterface $tripParticipantsRepository
     ){}
 
@@ -21,7 +23,7 @@ class TripParticipantsService implements TripParticipantsServiceInterface
     {
         $tripParticipantDto = InviteUserDto::from($inviteData);
  
-        $this->tripServiceInterface->getUserTrip($tripParticipantDto->trip_id, $userId);
+        $this->tripService->getUserTrip($tripParticipantDto->trip_id, $userId);
                
         if($userId === $tripParticipantDto->user_id) {
             throw new BadRequestHttpException("Creator can't invite himself for a trip.");
@@ -35,4 +37,14 @@ class TripParticipantsService implements TripParticipantsServiceInterface
 
         $this->tripParticipantsRepository->create($tripParticipantDto);
     }
+
+    public function getAllTripInvites(int $tripId, int $userId): Collection
+    {
+        $this->tripService->getUserTrip($tripId, $userId);
+        
+        $tripParticipantsData = $this->tripParticipantsRepository->getInvites($tripId);
+
+        return GetAllTripParticipantsDto::collect($tripParticipantsData);
+    }
+
 }
