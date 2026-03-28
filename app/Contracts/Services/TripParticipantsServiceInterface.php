@@ -9,4 +9,6 @@ interface TripParticipantsServiceInterface
     public function inviteUser(array $inviteData, int $userId): void;
 
     public function getAllTripInvites(int $tripId, int $userId): Collection;
+
+    public function updateInviteStatus(array $inviteData, int $userId): void;
 }

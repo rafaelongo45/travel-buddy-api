@@ -18,7 +18,7 @@ class InviteTripParticipantRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        request()->merge([
+        $this->merge([
             'trip_id' => $this->route('id')
         ]);
     }
@@ -32,8 +32,7 @@ class InviteTripParticipantRequest extends FormRequest
     {
         return [
             'user_id' => ['required', 'exists:users,id'],
-            'trip_id' => ['required', Rule::exists('trips', 'id')->whereNull('deleted_at')
-]
+            'trip_id' => ['required', Rule::exists('trips', 'id')->whereNull('deleted_at')],
         ];
     }
 }

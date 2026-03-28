@@ -20,6 +20,6 @@ Route::middleware('auth:api')->group(function () {
 
         Route::post('/{id}/invites', [TripParticipantsController::class, 'invite']);
         Route::get('/{id}/invites', [TripParticipantsController::class, 'getInvites']);
-
+        Route::put('/{id}/invites/{invite_id}', [TripParticipantsController::class, 'updateInviteStatus']);
     });
 });

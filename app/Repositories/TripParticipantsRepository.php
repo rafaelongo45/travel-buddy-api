@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Contracts\Repositories\TripParticipantsRepositoryInterface;
 use App\DTO\TripParticipants\InviteUserDto;
+use App\DTO\TripParticipants\UpdateInviteDto;
 use App\Models\TripParticipant;
 use Illuminate\Support\Collection;
 
@@ -26,5 +27,16 @@ class TripParticipantsRepository implements TripParticipantsRepositoryInterface
         return TripParticipant::with('user')
             ->where('trip_id', $tripId)
             ->get();
+    }
+
+    public function updateInvite(UpdateInviteDto $tripUpdateDto, int $id): void
+    {
+        TripParticipant::where('id', $id)->update($tripUpdateDto->toArray());
+    }
+
+    public function getInvite(int $tripInviteId): ?TripParticipant
+    {
+        return TripParticipant::where('id', $tripInviteId)
+            ->first();
     }
 }

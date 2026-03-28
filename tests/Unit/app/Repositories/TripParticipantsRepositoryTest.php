@@ -3,6 +3,7 @@
 namespace tests\Unit\app\Repositories;
 
 use App\DTO\TripParticipants\InviteUserDto;
+use App\DTO\TripParticipants\UpdateInviteDto;
 use App\Models\Trip;
 use App\Models\TripParticipant;
 use App\Models\User;
@@ -75,4 +76,45 @@ it('should return empty collection when trip has no invites', function () {
     $result = $this->repository->getInvites($trip->id);
 
     expect($result)->toBeEmpty();
+});
+
+it('should get a single invite by id', function () {
+    $owner  = User::factory()->create();
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $owner->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $result = $this->repository->getInvite($invite->id);
+
+    expect($result)->toBeInstanceOf(TripParticipant::class);
+    expect($result->id)->toBe($invite->id);
+});
+
+it('should return null when invite id does not exist', function () {
+    $result = $this->repository->getInvite(99999);
+
+    expect($result)->toBeNull();
+});
+
+it('should update invite status', function () {
+    $owner  = User::factory()->create();
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $owner->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+        'status'  => 'pending',
+    ]);
+
+    $dto = UpdateInviteDto::from(['status' => 'accepted']);
+
+    $this->repository->updateInvite($dto, $invite->id);
+
+    $this->assertDatabaseHas('trip_participants', [
+        'id'     => $invite->id,
+        'status' => 'accepted',
+    ]);
 });

@@ -3,12 +3,16 @@
 namespace tests\Feature\Http\Controllers;
 
 use App\Contracts\Services\TripParticipantsServiceInterface;
+use App\Exceptions\CannotInviteYourselfException;
+use App\Exceptions\InvalidUserTripInvite;
 use App\Exceptions\Trip\TripNotFoundException;
+use App\Exceptions\TripInvitationNotFound;
 use App\Exceptions\TripInviteAlreadySent;
 use App\Models\Trip;
+use App\Models\TripParticipant;
 use App\Models\User;
 use Mockery;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function () {
     $this->tripParticipantsService = Mockery::mock(TripParticipantsServiceInterface::class);
@@ -116,7 +120,7 @@ it('should return 400 when user tries to invite himself', function () {
     $this->tripParticipantsService
         ->shouldReceive('inviteUser')
         ->once()
-        ->andThrow(new BadRequestHttpException("Creator can't invite himself for a trip."));
+        ->andThrow(new CannotInviteYourselfException("Creator can't invite himself for a trip.", Response::HTTP_BAD_REQUEST));
 
     $response = $this->actingAs($this->user, 'api')
         ->postJson("/api/trips/{$trip->id}/invites", [
@@ -159,6 +163,169 @@ it('should return 404 when trip does not belong to user on getInvites', function
         ->getJson("/api/trips/{$trip->id}/invites");
 
     $response->assertStatus(404);
+});
+
+// updateInviteStatus
+
+it('should update invite status and return 202', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('updateInviteStatus')
+        ->once();
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", [
+            'status' => 'accepted',
+        ]);
+
+    $response->assertStatus(202)
+             ->assertJson(['message' => 'Invite updated successfully.']);
+});
+
+it('should return 401 when not authenticated on updateInviteStatus', function () {
+    $response = $this->putJson('/api/trips/1/invites/1', [
+        'status' => 'accepted',
+    ]);
+
+    $response->assertStatus(401);
+});
+
+it('should return 422 when status is missing', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", []);
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['status']);
+});
+
+it('should return 422 when status is invalid', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", [
+            'status' => 'pending',
+        ]);
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['status']);
+});
+
+it('should return 422 when trip does not exist on updateInviteStatus', function () {
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/99999/invites/{$invite->id}", [
+            'status' => 'accepted',
+        ]);
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['trip_id']);
+});
+
+it('should return 422 when trip was soft deleted on updateInviteStatus', function () {
+    $trip = Trip::factory()->create(['user_id' => $this->user->id]);
+    $trip->delete();
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", [
+            'status' => 'accepted',
+        ]);
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['trip_id']);
+});
+
+it('should return 422 when invite does not exist', function () {
+    $trip = Trip::factory()->create(['user_id' => $this->user->id]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/99999", [
+            'status' => 'accepted',
+        ]);
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['invite_id']);
+});
+
+it('should return 404 when invite is not found on service', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('updateInviteStatus')
+        ->once()
+        ->andThrow(new TripInvitationNotFound("Trip invitation doesn't exist.", Response::HTTP_NOT_FOUND));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", [
+            'status' => 'accepted',
+        ]);
+
+    $response->assertStatus(404);
+});
+
+it('should return 403 when user is not the invited user', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('updateInviteStatus')
+        ->once()
+        ->andThrow(new InvalidUserTripInvite("User wasn't invited for the trip.", Response::HTTP_FORBIDDEN));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", [
+            'status' => 'accepted',
+        ]);
+
+    $response->assertStatus(403);
+});
+
+it('should return 400 when invite is already responded', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+        'status'  => 'accepted',
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('updateInviteStatus')
+        ->once()
+        ->andThrow(new InvalidUserTripInvite("Trip is not pending and can't be accepted/refuse.", Response::HTTP_BAD_REQUEST));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->putJson("/api/trips/{$trip->id}/invites/{$invite->id}", [
+            'status' => 'refused',
+        ]);
+
+    $response->assertStatus(400);
 });
 
 it('should return 409 when invite was already sent', function () {
