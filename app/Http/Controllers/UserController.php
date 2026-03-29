@@ -38,6 +38,15 @@ class UserController extends Controller
         return $this->respondWithToken($token);
     }
 
+    public function me(): JsonResponse
+    {
+        $userId = $this->getUserId();
+
+        $userData = $this->userService->findUser($userId);
+
+        return response()->json($userData, Response::HTTP_OK);
+    }
+
     private function respondWithToken(string $token): JsonResponse
     {
         return response()->json([

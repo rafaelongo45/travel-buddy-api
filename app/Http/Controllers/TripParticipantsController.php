@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\TripParticipantsServiceInterface;
+use App\Http\Requests\DeleteInviteRequest;
 use App\Http\Requests\InviteTripParticipantRequest;
 use App\Http\Requests\UpdateInviteStatusRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class TripParticipantsController extends Controller
@@ -43,5 +45,14 @@ class TripParticipantsController extends Controller
         return response()->json([
             'message' => 'Invite updated successfully.'
         ], Response::HTTP_ACCEPTED);
+    }
+
+    public function deleteInvitation(DeleteInviteRequest $request): HttpResponse
+    {
+        $userId = $this->getUserId();
+
+        $this->tripParticipantsService->deleteInvitation($request->all(), $userId);
+
+        return response()->noContent();
     }
 }

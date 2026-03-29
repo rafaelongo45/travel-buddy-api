@@ -18,4 +18,6 @@ interface TripParticipantsRepositoryInterface
     public function updateInvite(UpdateInviteDto $tripUpdateDto, int $id): void;
 
     public function getInvite(int $tripInviteId): ?TripParticipant;
+
+    public function delete(int $id): void;
 }

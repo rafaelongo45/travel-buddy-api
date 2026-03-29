@@ -10,9 +10,11 @@ use App\DTO\TripParticipants\InviteUserDto;
 use App\DTO\TripParticipants\UpdateInviteDto;
 use App\Exceptions\CannotInviteYourselfException;
 use App\Exceptions\InvalidUserTripInvite;
+use App\Exceptions\InviteDoesNotBelongToTripException;
 use App\Exceptions\TripInvitationNotFound;
 use App\Exceptions\TripInviteAlreadySent;
 use App\Exceptions\TripInviteStatusAlreadyUpdated;
+use App\Models\TripParticipant;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -55,10 +57,7 @@ class TripParticipantsService implements TripParticipantsServiceInterface
     {
         $tripInvite = $this->tripParticipantsRepository->getInvite($inviteData['invite_id']);
 
-        if($tripInvite === null)
-        {
-            throw new TripInvitationNotFound("Trip invitation doesn't exist.", Response::HTTP_NOT_FOUND);
-        }
+        $this->verifyInvitationExists($tripInvite);
 
         if($userId !== $tripInvite->user_id)
         {
@@ -77,4 +76,27 @@ class TripParticipantsService implements TripParticipantsServiceInterface
         $this->tripParticipantsRepository->updateInvite($tripUpdateDto, $inviteData['invite_id']);
     }
 
+    public function deleteInvitation(array $inviteData, int $userId): void
+    {
+        $this->tripService->getUserTrip($inviteData['trip_id'], $userId);
+
+        $tripInvite = $this->tripParticipantsRepository->getInvite($inviteData['invite_id']);
+
+        $this->verifyInvitationExists($tripInvite);
+
+        if($tripInvite->trip_id !== $inviteData['trip_id'])
+        {
+            throw new InviteDoesNotBelongToTripException("Trip invitation does not belong to user", Response::HTTP_FORBIDDEN);
+        }
+
+        $this->tripParticipantsRepository->delete($inviteData['invite_id']);
+    }
+
+    private function verifyInvitationExists(?TripParticipant $tripInvite): void
+    {
+        if($tripInvite === null)
+        {
+            throw new TripInvitationNotFound("Trip invitation doesn't exist.", Response::HTTP_NOT_FOUND);
+        }
+    }
 }

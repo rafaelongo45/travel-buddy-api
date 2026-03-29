@@ -39,4 +39,10 @@ class TripParticipantsRepository implements TripParticipantsRepositoryInterface
         return TripParticipant::where('id', $tripInviteId)
             ->first();
     }
+
+    public function delete(int $id): void
+    {
+        TripParticipant::where('id', $id)
+            ->delete();
+    }
 }

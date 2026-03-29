@@ -10,7 +10,12 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [UserController::class, 'signin']);
 });
 
+
 Route::middleware('auth:api')->group(function () {
+    Route::prefix('user')->group(function () {
+        Route::get('me', [UserController::class, 'me']);
+    });
+
     Route::prefix('trips')->group(function () {
         Route::post('/', [TripController::class, 'createTrip']);
         Route::get('/{trip_id}', [TripController::class, 'getUserTrip']);
@@ -21,5 +26,6 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/{id}/invites', [TripParticipantsController::class, 'invite']);
         Route::get('/{id}/invites', [TripParticipantsController::class, 'getInvites']);
         Route::put('/{id}/invites/{invite_id}', [TripParticipantsController::class, 'updateInviteStatus']);
+        Route::delete('/{id}/invites/{invite_id}', [TripParticipantsController::class, 'deleteInvitation']);
     });
 });

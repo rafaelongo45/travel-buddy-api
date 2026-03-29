@@ -99,6 +99,20 @@ it('should return null when invite id does not exist', function () {
     expect($result)->toBeNull();
 });
 
+it('should soft delete an invite', function () {
+    $owner  = User::factory()->create();
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $owner->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->repository->delete($invite->id);
+
+    $this->assertSoftDeleted('trip_participants', ['id' => $invite->id]);
+});
+
 it('should update invite status', function () {
     $owner  = User::factory()->create();
     $guest  = User::factory()->create();

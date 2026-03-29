@@ -4,6 +4,7 @@ namespace tests\Feature\Http\Controllers;
 
 use App\Contracts\Services\TripParticipantsServiceInterface;
 use App\Exceptions\CannotInviteYourselfException;
+use App\Exceptions\InviteDoesNotBelongToTripException;
 use App\Exceptions\InvalidUserTripInvite;
 use App\Exceptions\Trip\TripNotFoundException;
 use App\Exceptions\TripInvitationNotFound;
@@ -326,6 +327,142 @@ it('should return 400 when invite is already responded', function () {
         ]);
 
     $response->assertStatus(400);
+});
+
+// deleteInvitation
+
+it('should delete an invitation and return 204', function () {
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('deleteInvitation')
+        ->once();
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/{$invite->id}");
+
+    $response->assertStatus(204);
+});
+
+it('should return 401 when not authenticated on deleteInvitation', function () {
+    $response = $this->deleteJson('/api/trips/1/invites/1');
+
+    $response->assertStatus(401);
+});
+
+it('should return 422 when trip does not exist on deleteInvitation', function () {
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/99999/invites/{$invite->id}");
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['trip_id']);
+});
+
+it('should return 422 when trip was soft deleted on deleteInvitation', function () {
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $this->user->id,
+        'trip_id' => $trip->id,
+    ]);
+    $trip->delete();
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/{$invite->id}");
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['trip_id']);
+});
+
+it('should return 422 when invite does not exist on deleteInvitation', function () {
+    $trip = Trip::factory()->create(['user_id' => $this->user->id]);
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/99999");
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['invite_id']);
+});
+
+it('should return 422 when invite was soft deleted on deleteInvitation', function () {
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+    $invite->delete();
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/{$invite->id}");
+
+    $response->assertStatus(422)
+             ->assertJsonValidationErrors(['invite_id']);
+});
+
+it('should return 404 when trip does not belong to user on deleteInvitation', function () {
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('deleteInvitation')
+        ->once()
+        ->andThrow(new TripNotFoundException('Trip was not found for the user.', 404));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/{$invite->id}");
+
+    $response->assertStatus(404);
+});
+
+it('should return 404 when invite is not found on service on deleteInvitation', function () {
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('deleteInvitation')
+        ->once()
+        ->andThrow(new TripInvitationNotFound("Trip invitation doesn't exist.", Response::HTTP_NOT_FOUND));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/{$invite->id}");
+
+    $response->assertStatus(404);
+});
+
+it('should return 403 when invite belongs to a different trip on deleteInvitation', function () {
+    $guest  = User::factory()->create();
+    $trip   = Trip::factory()->create(['user_id' => $this->user->id]);
+    $invite = TripParticipant::factory()->create([
+        'user_id' => $guest->id,
+        'trip_id' => $trip->id,
+    ]);
+
+    $this->tripParticipantsService
+        ->shouldReceive('deleteInvitation')
+        ->once()
+        ->andThrow(new InviteDoesNotBelongToTripException('Trip invitation does not belong to user', Response::HTTP_FORBIDDEN));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->deleteJson("/api/trips/{$trip->id}/invites/{$invite->id}");
+
+    $response->assertStatus(403);
 });
 
 it('should return 409 when invite was already sent', function () {

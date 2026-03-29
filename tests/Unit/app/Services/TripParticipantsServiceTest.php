@@ -6,6 +6,7 @@ use App\Contracts\Repositories\TripParticipantsRepositoryInterface;
 use App\Contracts\Services\TripServiceInterface;
 use App\Exceptions\CannotInviteYourselfException;
 use App\Exceptions\InvalidUserTripInvite;
+use App\Exceptions\InviteDoesNotBelongToTripException;
 use App\Exceptions\Trip\TripNotFoundException;
 use App\Exceptions\TripInvitationNotFound;
 use App\Exceptions\TripInviteAlreadySent;
@@ -235,3 +236,119 @@ it('should throw TripInviteStatusAlreadyUpdated when invite is not pending', fun
         $userId
     );
 })->throws(TripInviteStatusAlreadyUpdated::class);
+
+// deleteInvitation
+
+it('should delete an invitation successfully', function () {
+    $tripId   = 1;
+    $inviteId = 1;
+    $userId   = 1;
+
+    $invite          = new TripParticipant();
+    $invite->id      = $inviteId;
+    $invite->trip_id = $tripId;
+
+    $this->tripService
+        ->shouldReceive('getUserTrip')
+        ->once()
+        ->with($tripId, $userId)
+        ->andReturn(new Trip());
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getInvite')
+        ->once()
+        ->with($inviteId)
+        ->andReturn($invite);
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('delete')
+        ->once()
+        ->with($inviteId);
+
+    $this->tripParticipantsService->deleteInvitation(
+        ['trip_id' => $tripId, 'invite_id' => $inviteId],
+        $userId
+    );
+
+    expect(true)->toBeTrue();
+});
+
+it('should throw TripNotFoundException when trip does not belong to user on deleteInvitation', function () {
+    $tripId   = 99;
+    $inviteId = 1;
+    $userId   = 1;
+
+    $this->tripService
+        ->shouldReceive('getUserTrip')
+        ->once()
+        ->with($tripId, $userId)
+        ->andThrow(new TripNotFoundException('Trip was not found for the user.', 404));
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getInvite')
+        ->never();
+
+    $this->tripParticipantsService->deleteInvitation(
+        ['trip_id' => $tripId, 'invite_id' => $inviteId],
+        $userId
+    );
+})->throws(TripNotFoundException::class);
+
+it('should throw TripInvitationNotFound when invite does not exist on deleteInvitation', function () {
+    $tripId   = 1;
+    $inviteId = 99;
+    $userId   = 1;
+
+    $this->tripService
+        ->shouldReceive('getUserTrip')
+        ->once()
+        ->with($tripId, $userId)
+        ->andReturn(new Trip());
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getInvite')
+        ->once()
+        ->with($inviteId)
+        ->andReturn(null);
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('delete')
+        ->never();
+
+    $this->tripParticipantsService->deleteInvitation(
+        ['trip_id' => $tripId, 'invite_id' => $inviteId],
+        $userId
+    );
+})->throws(TripInvitationNotFound::class);
+
+it('should throw InviteDoesNotBelongToTripException when invite belongs to a different trip', function () {
+    $tripId        = 1;
+    $otherTripId   = 2;
+    $inviteId      = 1;
+    $userId        = 1;
+
+    $invite          = new TripParticipant();
+    $invite->id      = $inviteId;
+    $invite->trip_id = $otherTripId;
+
+    $this->tripService
+        ->shouldReceive('getUserTrip')
+        ->once()
+        ->with($tripId, $userId)
+        ->andReturn(new Trip());
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getInvite')
+        ->once()
+        ->with($inviteId)
+        ->andReturn($invite);
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('delete')
+        ->never();
+
+    $this->tripParticipantsService->deleteInvitation(
+        ['trip_id' => $tripId, 'invite_id' => $inviteId],
+        $userId
+    );
+})->throws(InviteDoesNotBelongToTripException::class);

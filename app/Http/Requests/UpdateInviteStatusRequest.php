@@ -33,7 +33,7 @@ class UpdateInviteStatusRequest extends FormRequest
         return [
             'status' => ['required', 'string', 'in:accepted,refused'],
             'trip_id' => ['required', Rule::exists('trips', 'id')->whereNull('deleted_at')],
-            'invite_id' => ['required', 'exists:trip_participants,id']
+            'invite_id' => ['required', Rule::exists('trip_participants', 'id')->whereNull('deleted_at')],
         ];
     }
 }

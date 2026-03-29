@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('trip_id');
             $table->enum('status', ['pending', 'accepted', 'refused'])->default('pending');
+            $table->softDeletes();
 
             $table->foreign('user_id')
                 ->references('id')
@@ -26,7 +27,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('trips')
                 ->onDelete('cascade');
-
+            
             $table->unique(['trip_id', 'user_id']);
 
             $table->timestamps();
