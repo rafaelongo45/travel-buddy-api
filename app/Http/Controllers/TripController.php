@@ -6,6 +6,8 @@ use App\Contracts\Services\TripServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateTripRequest;
 use App\Http\Requests\UpdateTripRequest;
+use Illuminate\Http\Response as HttpResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class TripController extends Controller
@@ -14,7 +16,7 @@ class TripController extends Controller
         private readonly TripServiceInterface $tripService
     ){}
 
-    public function createTrip(CreateTripRequest $request)
+    public function createTrip(CreateTripRequest $request): JsonResponse
     {
         $userId = $this->getUserId();
 
@@ -25,7 +27,7 @@ class TripController extends Controller
         ], Response::HTTP_CREATED);
     }
 
-    public function getUserTrips()
+    public function getUserTrips(): JsonResponse
     {
         $userId = $this->getUserId();
         $trips = $this->tripService->getUserTrips($userId);
@@ -33,7 +35,7 @@ class TripController extends Controller
         return response()->json($trips, Response::HTTP_OK);
     }
 
-    public function getUserTrip(int $tripId)
+    public function getUserTrip(int $tripId): JsonResponse
     {
         $userId = $this->getUserId();
 
@@ -43,7 +45,7 @@ class TripController extends Controller
         );
     }
 
-    public function updateTrip(UpdateTripRequest $request, int $tripId)
+    public function updateTrip(UpdateTripRequest $request, int $tripId): JsonResponse
     {
         $userId = $this->getUserId();
 
@@ -54,17 +56,12 @@ class TripController extends Controller
         ], Response::HTTP_ACCEPTED);
     }
 
-    public function deleteTrip(int $tripId)
+    public function deleteTrip(int $tripId): HttpResponse
     {
         $userId = $this->getUserId();
 
         $this->tripService->deleteTrip($tripId, $userId);
 
         return response()->noContent();
-    }
-
-    private function getUserId(): int
-    {
-        return auth()->guard('api')->user()->id;
     }
 }

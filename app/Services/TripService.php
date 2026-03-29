@@ -31,7 +31,8 @@ class TripService implements TripServiceInterface
 
         $userTrips = $this->tripRepository->getTripsPeriod(
             $userId,
-            $tripDto->start_date
+            $tripDto->start_date,
+            $tripDto->end_date
         );
 
         if(!empty($userTrips)) {

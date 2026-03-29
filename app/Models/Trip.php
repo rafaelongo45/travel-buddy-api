@@ -22,4 +22,9 @@ class Trip extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function tripParticipants()
+    {
+        return $this->hasMany(TripParticipant::class);
+    }
 }
