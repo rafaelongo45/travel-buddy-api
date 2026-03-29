@@ -329,6 +329,27 @@ it('should return 400 when invite is already responded', function () {
     $response->assertStatus(400);
 });
 
+// getTripsInvited
+
+it('should return shared trips and return 200', function () {
+    $this->tripParticipantsService
+        ->shouldReceive('getUserTrips')
+        ->once()
+        ->with($this->user->id)
+        ->andReturn(collect([]));
+
+    $response = $this->actingAs($this->user, 'api')
+        ->getJson('/api/trips/shared');
+
+    $response->assertStatus(200);
+});
+
+it('should return 401 when not authenticated on getTripsInvited', function () {
+    $response = $this->getJson('/api/trips/shared');
+
+    $response->assertStatus(401);
+});
+
 // deleteInvitation
 
 it('should delete an invitation and return 204', function () {

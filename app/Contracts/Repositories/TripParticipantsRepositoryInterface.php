@@ -20,4 +20,6 @@ interface TripParticipantsRepositoryInterface
     public function getInvite(int $tripInviteId): ?TripParticipant;
 
     public function delete(int $id): void;
+
+    public function getUserTripsInvites(int $userId): Collection;
 }

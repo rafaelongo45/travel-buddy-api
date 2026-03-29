@@ -55,4 +55,13 @@ class TripParticipantsController extends Controller
 
         return response()->noContent();
     }
+
+    public function getTripsInvited(): JsonResponse
+    {
+        $userId = $this->getUserId();
+
+        $trips = $this->tripParticipantsService->getUserTrips($userId);
+
+        return response()->json($trips, Response::HTTP_OK);
+    }
 }

@@ -6,6 +6,7 @@ use App\Contracts\Repositories\TripParticipantsRepositoryInterface;
 use App\Contracts\Services\TripParticipantsServiceInterface;
 use App\Contracts\Services\TripServiceInterface;
 use App\DTO\TripParticipants\GetAllTripParticipantsDto;
+use App\DTO\TripParticipants\UserTripParticipationDto;
 use App\DTO\TripParticipants\InviteUserDto;
 use App\DTO\TripParticipants\UpdateInviteDto;
 use App\Exceptions\CannotInviteYourselfException;
@@ -15,8 +16,8 @@ use App\Exceptions\TripInvitationNotFound;
 use App\Exceptions\TripInviteAlreadySent;
 use App\Exceptions\TripInviteStatusAlreadyUpdated;
 use App\Models\TripParticipant;
-use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Collection;
 
 class TripParticipantsService implements TripParticipantsServiceInterface
 {
@@ -91,6 +92,14 @@ class TripParticipantsService implements TripParticipantsServiceInterface
 
         $this->tripParticipantsRepository->delete($inviteData['invite_id']);
     }
+
+    public function getUserTrips(int $userId): Collection
+    {
+        $userTripsInvites = $this->tripParticipantsRepository->getUserTripsInvites($userId);
+
+        return UserTripParticipationDto::collect($userTripsInvites);    
+    }
+
 
     private function verifyInvitationExists(?TripParticipant $tripInvite): void
     {

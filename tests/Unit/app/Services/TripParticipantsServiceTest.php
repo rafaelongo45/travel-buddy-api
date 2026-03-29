@@ -237,6 +237,22 @@ it('should throw TripInviteStatusAlreadyUpdated when invite is not pending', fun
     );
 })->throws(TripInviteStatusAlreadyUpdated::class);
 
+// getUserTrips
+
+it('should return a collection of accepted trips for the user', function () {
+    $userId = 1;
+
+    $this->tripParticipantsRepository
+        ->shouldReceive('getUserTripsInvites')
+        ->once()
+        ->with($userId)
+        ->andReturn(collect([]));
+
+    $result = $this->tripParticipantsService->getUserTrips($userId);
+
+    expect($result)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+});
+
 // deleteInvitation
 
 it('should delete an invitation successfully', function () {

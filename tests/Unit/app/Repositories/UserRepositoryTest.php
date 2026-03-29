@@ -44,3 +44,31 @@ it('should return null when user is not found by email', function () {
 
     expect($user)->toBeNull();
 });
+
+// --- update ---
+
+it('should update user name in the database', function () {
+    $user = \App\Models\User::factory()->create(['name' => 'Old Name']);
+
+    $dto = \App\DTO\User\UpdateUserDto::from(['name' => 'New Name']);
+
+    $this->userRepository->update($dto, $user->id);
+
+    $this->assertDatabaseHas('users', [
+        'id'   => $user->id,
+        'name' => 'New Name',
+    ]);
+});
+
+it('should update user password in the database', function () {
+    $user = \App\Models\User::factory()->create();
+
+    $hashed = \Illuminate\Support\Facades\Hash::make('newpassword123');
+    $dto    = \App\DTO\User\UpdateUserDto::from(['password' => $hashed]);
+
+    $this->userRepository->update($dto, $user->id);
+
+    $updated = \App\Models\User::find($user->id);
+
+    expect(\Illuminate\Support\Facades\Hash::check('newpassword123', $updated->password))->toBeTrue();
+});

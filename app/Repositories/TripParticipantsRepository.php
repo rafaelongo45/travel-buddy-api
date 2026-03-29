@@ -45,4 +45,12 @@ class TripParticipantsRepository implements TripParticipantsRepositoryInterface
         TripParticipant::where('id', $id)
             ->delete();
     }
+
+    public function getUserTripsInvites(int $userId): Collection
+    {
+        return TripParticipant::where('user_id', $userId)
+            ->where('status', 'accepted')
+            ->with('trip')
+            ->get();
+    }
 }

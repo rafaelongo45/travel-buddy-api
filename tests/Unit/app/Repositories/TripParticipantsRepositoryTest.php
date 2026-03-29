@@ -113,6 +113,56 @@ it('should soft delete an invite', function () {
     $this->assertSoftDeleted('trip_participants', ['id' => $invite->id]);
 });
 
+it('should return accepted trips for a user', function () {
+    $owner        = User::factory()->create();
+    $user         = User::factory()->create();
+    $acceptedTrip = Trip::factory()->create(['user_id' => $owner->id]);
+    $pendingTrip  = Trip::factory()->create(['user_id' => $owner->id]);
+
+    TripParticipant::factory()->create([
+        'user_id' => $user->id,
+        'trip_id' => $acceptedTrip->id,
+        'status'  => 'accepted',
+    ]);
+
+    TripParticipant::factory()->create([
+        'user_id' => $user->id,
+        'trip_id' => $pendingTrip->id,
+        'status'  => 'pending',
+    ]);
+
+    $result = $this->repository->getUserTripsInvites($user->id);
+
+    expect($result)->toHaveCount(1);
+    expect($result->first()->trip_id)->toBe($acceptedTrip->id);
+    expect($result->first()->relationLoaded('trip'))->toBeTrue();
+});
+
+it('should return empty collection when user has no accepted trips', function () {
+    $user = User::factory()->create();
+
+    $result = $this->repository->getUserTripsInvites($user->id);
+
+    expect($result)->toBeEmpty();
+});
+
+it('should not return trips from other users', function () {
+    $owner    = User::factory()->create();
+    $userA    = User::factory()->create();
+    $userB    = User::factory()->create();
+    $trip     = Trip::factory()->create(['user_id' => $owner->id]);
+
+    TripParticipant::factory()->create([
+        'user_id' => $userA->id,
+        'trip_id' => $trip->id,
+        'status'  => 'accepted',
+    ]);
+
+    $result = $this->repository->getUserTripsInvites($userB->id);
+
+    expect($result)->toBeEmpty();
+});
+
 it('should update invite status', function () {
     $owner  = User::factory()->create();
     $guest  = User::factory()->create();
